@@ -22,9 +22,9 @@ solution pen(matrix x0, double c, double dc, double epsilon, int Nmax, matrix O 
 solution sym_NM(matrix x0, double s, double alfa, double beta, double gama, double delta, double epsilon, int Nmax, matrix O = 0.0);
 #endif
 #if LAB_NO>4
-solution SD(matrix x0, double epsilon, int Nmax, matrix O = 0.0);
-solution CG(matrix x0, double epsilon, int Nmax, matrix O = 0.0);
-solution Newton(matrix x0, double epsilon, int Nmax, matrix O = 0.0);
+solution SD(matrix x0,double h0, double epsilon, int Nmax, matrix O = 0.0);
+solution CG(matrix x0,double h0, double epsilon, int Nmax, matrix O = 0.0);
+solution Newton(matrix x0, double h0, double epsilon, int Nmax, matrix O = 0.0);
 solution golden(double a, double b, double epsilon, int Nmax, matrix O = 0.0);
 double compute_b(matrix x, matrix d, matrix limits);
 #endif

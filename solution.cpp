@@ -193,17 +193,40 @@ void solution::fit_fun(matrix O)
 
 
 
+
+
 #endif
+
+#elif LAB_NO == 5
+	int *n = get_size(0);
+	if (n[1] == 1)
+		y = pow(x(0) + 2 * x(1) - 7, 2) + pow(2 * x(0) + x(1) - 5, 2); // tu jest oryginalna funkcja celu
+	else
+	{
+		solution temp;
+		temp.x = O(0) + x*O[1];
+		temp.fit_fun();
+		y = temp.y;
+		--f_calls; // zmniejszamy, bo wywolujemy jeszcze raz; nalezy je zwiekszac tylko obliczajac oryginalna funkcje celu
+
+	}
+
 #endif
 	++f_calls;
 }
 
 void solution::grad(matrix O)
 {
+	g = matrix(2, 1);
+	g(0) = 10 * x(0) + 8 * x(1) - 34;
+	g(1) = 8 * x(0) + 10 * x(1) - 38;
 	++g_calls;
 }
 
 void solution::hess(matrix O)
 {
+	H = matrix(2, 2);
+	H(0, 0) = H(1, 1) = 10;
+	H(0, 1) = H(1, 0) = 8;
 	++H_calls;
 }

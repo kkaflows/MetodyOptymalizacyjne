@@ -353,33 +353,41 @@ solution sym_NM(matrix x0, double s, double alfa, double beta, double gama, doub
 }
 #endif
 #if LAB_NO>4
-solution SD(matrix x0, double epsilon, int Nmax, matrix O)
+solution SD(matrix x0, double h0, double epsilon, int Nmax, matrix O)
 {
 	int *n = get_size(x0);
 	solution X, X1;
 	X.x = x0;
-	matrix d(n[0], 1), P(n[0], 2), limits = O;
-	solution h;
+	matrix d(n[0], 1), P(n[0], 2), limits = O;  // P - zawiera 
+	//ograniecznia  [ -10,10 ; -10,10 ]
+	solution h;	//g(alfa) - optymalna liczba krokow
 	double b;
 	while (true)
 	{
 		X.grad();
-		d = 
-		P = set_col(P, X.x, 0);
-		P = set_col(P, d, 1);
-		b = compute_b( , , limits);
-		h = golden( , , epsilon, Nmax, P);
-		X1.x = 
-		if ()
+		d = -X.g; // kierunek
+		if (h0 < 0) {
+			P = set_col(P, X.x, 0);
+			P = set_col(P, d, 1);
+			b = compute_b(X.x, d, limits);
+			h = golden(0, b, epsilon, Nmax, P);
+			X1.x = X.x + h.x * d;
+
+		}
+		else {
+			//jezeli podamy konkretna dlugosc kroku - chcemy, zeby metoda byla stalokrokowa
+			X1.x = X.x + h0 *d;
+		}
+		if (norm(X1.x - X.x) < epsilon || solution::f_calls>Nmax || solution::g_calls > Nmax ) //kryteria stopu
 		{
 			X1.fit_fun();
 			return X1;
 		}
-		X = 
+		X = X1;
 	}
 }
 
-solution CG(matrix x0, double epsilon, int Nmax, matrix O)
+solution CG(matrix x0, double h0, double epsilon, int Nmax, matrix O)
 {
 	int *n = get_size(x0);
 	solution X, X1;
@@ -388,30 +396,35 @@ solution CG(matrix x0, double epsilon, int Nmax, matrix O)
 	solution h;
 	double b, beta;
 	X.grad();
-	d = 
+	d = -X.g;
 	while (true)
 	{
-		P = set_col(P, X.x, 0);
-		P = set_col(P, d, 1);
-		b = compute_b( , , limits);
-		h = golden( , , epsilon, Nmax, P);
-		X1.x = 
-		if ()
+		if (h0 < 0) {
+			P = set_col(P, X.x, 0);
+			P = set_col(P, d, 1);
+			b = compute_b(X.x, d, limits);
+			h = golden(0, b, epsilon, Nmax, P);
+			X1.x = X.x - h.x *d;
+		}
+		else {
+			X1.x = X.x - h0*d;
+		}
+		if (norm(X1.x - X.x) < epsilon || solution::f_calls>Nmax || solution::g_calls > Nmax) // kryteria stopu
 		{
 			X1.fit_fun();
 			return X1;
 		}
 		X1.grad();
-		beta = 
-		d = 
-		X = 
+		beta = pow(norm(X1.g), 2) / pow(norm(X.g), 2);
+		d = -X1.g + beta *d;
+		X = X1;
 	}
 }
 
-solution Newton(matrix x0, double epsilon, int Nmax, matrix O)
+solution Newton(matrix x0, double h0, double epsilon, int Nmax, matrix O)
 {
 	int *n = get_size(x0);
-	solution X, X1;
+	solution X, X1; // jak wywo³ujesz solution, to dostajesz macierz
 	X.x = x0;
 	matrix d(n[0], 1), P(n[0], 2), limits = O;
 	solution h;
@@ -420,48 +433,49 @@ solution Newton(matrix x0, double epsilon, int Nmax, matrix O)
 	{
 		X.grad();
 		X.hess();
-		d = 
+		d = -inv(X.H) * X.g; // H - hesjan funkcji f
 		P = set_col(P, X.x, 0);
 		P = set_col(P, d, 1);
-		b = compute_b( , , limits);
-		h = golden( , , epsilon, Nmax, P);
-		X1.x = 
-		if ()
+		b = compute_b(X.x ,d , limits);
+		h = golden( 0,b , epsilon, Nmax, P);
+		X1.x = X.x + h.x*d;
+		if (norm(X1.x - X.x) < epsilon || solution::f_calls>Nmax || solution::g_calls > Nmax)
 		{
 			X1.fit_fun();
 			return X1;
 		}
-		X = 
+		X = X1;
 	}
 }
 
+//metoda zlotego podzialu - strona 34
 solution golden(double a, double b, double epsilon, int Nmax, matrix O)
 {
-	double alfa = 
+	double alfa = (sqrt(5.0) - 1) / 2;
 	solution A, B, C, D;
 	A.x = a;
 	B.x = b;
-	C.x = 
+	C.x = B.x - alfa * (B.x - A.x);
 	C.fit_fun(O);
-	D.x = 
+	D.x = A.x + alfa * (B.x - A.x);
 	D.fit_fun(O);
 	while (true)
 	{
-		if ()
+		if (C.y < D.y)
 		{
-			B =
-			D =
-			C.x = 
+			B = D;
+			D = C;
+			C.x = B.x - alfa * (B.x - A.x);
 			C.fit_fun(O);
 		}
 		else
 		{
-			A =
-			C =
-			D.x =
+			A = C;
+			C = D;
+			D.x = A.x + alfa *(B.x - A.x);
 			D.fit_fun(O);
 		}
-		if ()
+		if (solution::f_calls > Nmax || B.x - A.x < epsilon)
 		{
 			A.x = (A.x + B.x) / 2.0;
 			A.fit_fun(O);
@@ -476,12 +490,13 @@ double compute_b(matrix x, matrix d, matrix limits)
 	double b = 1e9, bi;
 	for (int i = 0; i < n[0]; ++i)
 	{
-		if (d(i) == 0)
-			bi = 
-		else if (d(i) > 0)
-			bi = 
+		if (d(i) == 0) //jak wspolrzedna w kierunku jest 0
+			bi = 1e9; // "nieskonczonosc"
+		else if (d(i) > 0) // jak wspolrzedna jest dodatnia
+			bi = (limits(i, 1) - x(i)) / d(i); // gorne ograniczenie
 		else
-			bi = 
+			bi = (limits(i, 0) - x(i)) / d(i); // dolne ograniczenie ; licznik ujemny / mianownik ujemny -> bi nieujemne
+		//bi nie moze byc ujemne; zakladamy,ze x lezy w obszarze dostepnym
 		if (b > bi)
 			b = bi;
 	}
