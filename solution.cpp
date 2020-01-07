@@ -198,7 +198,7 @@ void solution::fit_fun(matrix O)
 #endif
 
 #elif LAB_NO == 5
-	int *n = get_size(0);
+	int *n = get_size(O);
 	if (n[1] == 1)
 		y = pow(x(0) + 2 * x(1) - 7, 2) + pow(2 * x(0) + x(1) - 5, 2); // tu jest oryginalna funkcja celu
 	else
@@ -210,6 +210,52 @@ void solution::fit_fun(matrix O)
 		--f_calls; // zmniejszamy, bo wywolujemy jeszcze raz; nalezy je zwiekszac tylko obliczajac oryginalna funkcje celu
 
 	}
+#elif LAB_NO == 6
+#if LAB_PART == 1
+int *n = get_size(O);
+if (n[1] == 1) {
+	int  a = 1;
+		y = matrix(2, 1);
+		y(0) = a*pow(x(0) - 5, 2) + pow(x(1) - 5, 2);
+		y(1) = 1.0 / a*pow(x(0) + 5, 2) + pow(x(1) + 5, 2);
+}
+else {
+	solution temp;
+	temp.x = O[0] + x*O[1];
+	temp.fit_fun();
+	y = O(0, 2) * temp.y(0) + (1 - O(0, 2))*temp.y(1); // srednia wazona
+	--f_calls;
+}
+
+#elif LAB_PART == 2
+int *n = get_size(O);
+if (n[1] == 1) {
+	double ro = 7800;
+	double P = 1e3; //Newton
+	double E = 207e9; //Pascal
+	y = matrix(3, 1);
+
+	y(0) = ro*x(0)*3.14*pow(x(1),2)/4;
+	y(1) = 64 * P*pow(x(0), 3) / (3 * E*3.14*pow(x(1), 4));
+	y(2) = 32 * P*x(0) / (3.14*pow(x(1), 3));
+
+}
+else {
+	solution temp;
+	temp.x = O[0] + x*O[1];
+	temp.fit_fun();
+	y = O(0, 2)*temp.y(0) + (1 - O(0, 2))*temp.y(1);
+	if (temp.y(1) > 0.005)
+		y = y + 1e6*pow(temp.y(1) - 0.005, 2);
+
+	if (temp.y(2) > 300e6)
+		y = y + 1e6*pow(temp.y(2) - 300e6, 2);
+
+	--f_calls;
+}
+
+
+#endif
 
 #endif
 	++f_calls;

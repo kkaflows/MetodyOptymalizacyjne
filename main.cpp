@@ -233,6 +233,53 @@ solution::clear_calls();
 		
 #elif LAB_NO==6
 
+#if LAB_PART == 1
+	matrix x0(2, 1);
+	matrix O(2, 3);
+	int Nmax = 5000;
+	double epsilon = 1e-3;
+	random_device R;
+	double w = 0;
+	w = 1;
+	//ograniczenia
+	O(0, 0) = O(1, 0) = -10;
+	O(0, 1) = O(1, 1) = 10;
+
+	x0(0) = (O(0, 1) - O(0, 0))*R() / R.max() + O(0, 0);
+	x0(1) = (O(1, 1) - O(1, 0))*R() / R.max() + O(1, 0);
+
+	cout << "x0 = " << x0 << endl;
+
+	O(0, 2) = w;
+	solution opt = Powell(x0, epsilon, Nmax, O);
+	cout <<"opt = "<< opt << endl << endl;
+	solution::clear_calls();
+
+#elif LAB_PART == 2
+	matrix x0(2, 1);
+	matrix O(2, 3);
+	int Nmax = 5000;
+	double epsilon = 1e-3;
+	random_device R;
+	double w = 0;
+	//w = 0,5;
+	//ograniczenia
+	O(0, 0) = 0.2;
+	O(0, 1) = 1;
+	O(1, 0) = 0.01;
+	O(1, 1) = 0.05;
+
+	x0(0) = (O(0, 1) - O(0, 0))*R() / R.max() + O(0, 0);
+	x0(1) = (O(1, 1) - O(1, 0))*R() / R.max() + O(1, 0);
+
+	cout << "x0 = " << x0 << endl;
+
+	O(0, 2) = w;
+	solution opt = Powell(x0, epsilon, Nmax, O);
+	cout << "opt = " << opt << endl << endl;
+	solution::clear_calls();
+#endif
+
 #elif LAB_NO==7
 
 #endif

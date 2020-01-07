@@ -504,40 +504,41 @@ double compute_b(matrix x, matrix d, matrix limits)
 }
 #endif
 #if LAB_NO>5
-solution Powell(matrix x0, double epsilon, int Nmax, matrix O)
+solution Powell(matrix x0, double epsilon, int Nmax, matrix O) // O ograniczenia
 {
 	int *n = get_size(x0);
-	matrix D = unit_mat(n[0]), A(n[0], 3), limits(n[0], 2);
-	limits = set_col(limits, O[0], 0);
+	matrix D = unit_mat(n[0]), A(n[0], 3), limits(n[0], 2); // D = [1,0 ; 0,1]
+	limits = set_col(limits, O[0], 0); //ograniczenia
 	limits = set_col(limits, O[1], 1);
-	A(0, 2) = O(0, 2);
-	solution X, P, h;
+	A(0, 2) = O(0, 2);	
+	solution X, P, h;	//h - optymalna dlugosc kroku - wynik optymalizacji
 	X.x = x0;
-	double *ab;
+	double *ab; // dwuelementowa tablica, ab[0] - dolne ograniczenie, 1- gorne ogr.
 	while (true)
 	{
 		P = X;
-		for (int i = 0; i < ; ++i)
+		//optymalizacja wzdluz wszystkich kierunkow
+		for (int i = 0; i < n[0]; ++i)
 		{
 			A = set_col(A, P.x, 0);
 			A = set_col(A, D[i], 1);
-			ab = compute_ab( , , limits);
-			h = golden( , , epsilon, Nmax, A);
-			P.x = 
+			ab = compute_ab( P.x,D[i] , limits);
+			h = golden(ab[0], ab[1], epsilon, Nmax, A);
+			P.x = P.x + h.x*D[i];
 		}
-		if ()
+		if (norm(X.x - P.x)<epsilon || solution::f_calls >Nmax)
 		{
 			P.fit_fun();
 			return P;
 		}
 		for (int i = 0; i < n[0] - 1; ++i)
-			D = 
-		D = 
+			D = set_col(D, D[i + 1], i);
+		D = set_col(D, P.x - X.x, n[0] - 1);
 		A = set_col(A, P.x, 0);
 		A = set_col(A, D[n[0] - 1], 1);
-		ab = compute_ab( , , limits);
-		h = golden( , , epsilon, Nmax, A);
-		X.x = 
+		ab = compute_ab(P.x ,D[n[0]-1] , limits);
+		h = golden(ab[0] ,ab[1] , epsilon, Nmax, A);
+		X.x = P.x + h.x*D[n[0] - 1];
 	}
 }
 
@@ -550,18 +551,18 @@ double *compute_ab(matrix x, matrix d, matrix limits)
 	{
 		if (d(i) == 0)
 		{
-			ai = 
-			bi = 
+			ai = -1e9;
+			bi = 1e9;
 		}
 		else if (d(i) > 0)
 		{
-			ai = 
-			bi = 
+			ai = (limits(i, 0) - x(i)) / d(i);
+			bi = (limits(i, 1) - x(i)) / d(i);
 		}
 		else
 		{
-			ai = 
-			bi = 
+			ai = (limits(i, 1) - x(i)) / d(i);
+			bi = (limits(i, 0) - x(i)) / d(i);
 		}
 		if (ab[0] < ai)
 			ab[0] = ai;
