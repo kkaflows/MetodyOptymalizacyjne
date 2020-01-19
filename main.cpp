@@ -522,6 +522,35 @@ solution::clear_calls();
 #endif
 
 #elif LAB_NO==7
+	matrix O(1,1);
+	matrix Ox(2,2);
+	int Nmax = 5000;
+	double epsilon = 1e-3;
+	random_device R;
+	matrix x0(2, 1);
+
+	//ograniczenia
+	Ox(0, 0) = Ox(1, 0) = -5;
+	Ox(0, 1) = Ox(1, 1) = 5;
+
+	O(0, 0) = 100; // sigma
+	ofstream S("ea_100.csv");
+	S << "x*(0);x*(1);y*;f_calls;" << endl;
+
+	for (int i = 0; i < 100; i++) {
+			x0(0) = (Ox(0, 1) - Ox(0, 0)) * R() / R.max() + Ox(0, 0);
+			x0(1) = (Ox(1, 1) - Ox(1, 0)) * R() / R.max() + Ox(1, 0);
+
+
+		solution opt = EA(2, Ox, epsilon, Nmax, O);
+		S << opt.x(0) << ";" << opt.x(1) << ";" << opt.y(0) << ";" << solution::f_calls << ";" << endl;
+	
+		solution::clear_calls();
+	}
+	
+
+
+
 
 #endif
 	}

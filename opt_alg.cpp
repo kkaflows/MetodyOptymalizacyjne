@@ -1,4 +1,4 @@
-#include"opt_alg.h"
+﻿#include"opt_alg.h"
 #if LAB_NO>1
 double *expansion(double x0, double d, double alfa, int Nmax, matrix O) // x0 - wartosc. d - przesuniecie kolejnej wartoswci
 {
@@ -424,7 +424,7 @@ solution CG(matrix x0, double h0, double epsilon, int Nmax, matrix O)
 solution Newton(matrix x0, double h0, double epsilon, int Nmax, matrix O)
 {
 	int *n = get_size(x0);
-	solution X, X1; // jak wywo�ujesz solution, to dostajesz macierz
+	solution X, X1; // jak wywołujesz solution, to dostajesz macierz
 	X.x = x0;
 	matrix d(n[0], 1), P(n[0], 2), limits = O;
 	solution h;
@@ -575,24 +575,30 @@ double *compute_ab(matrix x, matrix d, matrix limits)
 #if LAB_NO>6
 solution EA(int N, matrix limits, double epsilon, int Nmax, matrix O)
 {
+	//N - liczba zmiennych decyzyjnych
+	//limits - ograniczenia
+	//epsilon - dok�adno��
+	//Nmax - maksymalna liczba wywo�a� funckji celu
+	//O - macierz 1x1 zawieraj�ca warto�� sigma
+
 	int mi = 20, lambda = 40;
-	solution *P = new solution[mi + lambda];
-	solution *Pm = new solution[mi];
+	solution* P = new solution[mi + lambda];
+	solution* Pm = new solution[mi];
 	random_device rd;
 	default_random_engine gen;
 	gen.seed(static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count()));
 	normal_distribution<double> distr(0.0, 1.0);
 	matrix IFF(mi, 1), temp(N, 2);
 	double r, s, s_IFF;
-	double tau = , tau1 = ;
+	double tau = pow(2 * N, -0.5), tau1 = pow(2 * pow(N, 0.5), -0.5);
 	int j_min;
-	for (int i = 0; i < ; ++i)
+	for (int i = 0; i < mi; ++i)
 	{
 		P[i].x = matrix(N, 2);
 		for (int j = 0; j < N; ++j)
 		{
-			P[i].x(j, 0) = 
-			P[i].x(j, 1) = 
+			P[i].x(j, 0) = (limits(j, 1) - limits(j, 0)) * rd() / rd.max() + limits(j, 0);
+			P[i].x(j, 1) = O(0);
 		}
 		P[i].fit_fun();
 		if (P[i].y < epsilon)
@@ -601,16 +607,16 @@ solution EA(int N, matrix limits, double epsilon, int Nmax, matrix O)
 	while (true)
 	{
 		s_IFF = 0;
-		for (int i = 0; i < ; ++i)
+		for (int i = 0; i < mi; ++i)
 		{
-			IFF(i) = 
-			s_IFF = 
+			IFF(i) = 1 / P[i].y(0);
+			s_IFF += IFF(i);
 		}
-		for (int i = 0; i < ; ++i)
+		for (int i = 0; i < lambda; ++i)
 		{
-			r = 
+			r = s_IFF * rd() / rd.max();
 			s = 0;
-			for (int j = 0; j < ; ++j)
+			for (int j = 0; j < mi; ++j)
 			{
 				s += IFF(j);
 				if (r <= s)
@@ -620,23 +626,23 @@ solution EA(int N, matrix limits, double epsilon, int Nmax, matrix O)
 				}
 			}
 		}
-		for (int i = 0; i < ; ++i)
+		for (int i = 0; i < lambda; ++i)
 		{
 			r = distr(gen);
 			for (int j = 0; j < N; ++j)
 			{
-				P[mi + i].x(j, 1) =
-				P[mi + i].x(j, 0) = 
+				P[mi + i].x(j, 1) *= exp(tau1 * r + tau * distr(gen));
+				P[mi + i].x(j, 0) += P[mi + i].x(j, 1) * distr(gen);
 			}
 		}
-		for (int i = 0; i < ; i += 2)
+		for (int i = 0; i < lambda; i += 2)
 		{
-			r = 
+			r = 1.0 * rd() / rd.max();
 			temp = P[mi + i].x;
-			P[mi + i].x = 
-			P[mi + i + 1].x = 
+			P[mi + i].x = r * P[mi + i].x + (1 - r) * P[mi + i + 1].x;
+			P[mi + i + 1].x = r * P[mi + i + 1].x + (1 - r) * temp;
 		}
-		for (int i = 0; i < ; ++i)
+		for (int i = 0; i < lambda; ++i)
 		{
 			P[mi + i].fit_fun();
 			if (P[mi + i].y < epsilon)
@@ -645,15 +651,15 @@ solution EA(int N, matrix limits, double epsilon, int Nmax, matrix O)
 		for (int i = 0; i < mi; ++i)
 		{
 			j_min = 0;
-			for (int j = 1; j < ; ++j)
-				if (P[j_min].y>P[j].y)
+			for (int j = 1; j < mi + lambda; ++j)
+				if (P[j_min].y > P[j].y)
 					j_min = j;
 			Pm[i] = P[j_min];
 			P[j_min].y = 1e10;
 		}
 		for (int i = 0; i < mi; ++i)
 			P[i] = Pm[i];
-		if ()
+		if (solution::f_calls > Nmax)
 			return P[0];
 	}
 }
